@@ -12,7 +12,7 @@ const (
 
 var crlf = []byte("\r\n")
 
-type buffer struct {
+type Buffer struct {
 	buf         []byte
 	readerIndex int
 	writerIndex int
@@ -20,13 +20,13 @@ type buffer struct {
 
 // NewBuffer returns a buffer with default length.
 // Usually this function is enough.
-func NewBuffer() *buffer {
+func NewBuffer() *Buffer {
 	return NewBufferWithSize(initialSize)
 }
 
 // NewBufferWithSize returns a buffer with length you specified.
-func NewBufferWithSize(initialSize int) *buffer {
-	return &buffer{
+func NewBufferWithSize(initialSize int) *Buffer {
+	return &Buffer{
 		buf:         make([]byte, cheapPrepend+initialSize),
 		readerIndex: cheapPrepend,
 		writerIndex: cheapPrepend,
@@ -34,100 +34,100 @@ func NewBufferWithSize(initialSize int) *buffer {
 }
 
 // ReadableBytes returns count of byte in this buffer.
-func (b *buffer) ReadableBytes() int {
+func (b *Buffer) ReadableBytes() int {
 	return b.writerIndex - b.readerIndex
 }
 
 // WritableBytes returns byte count you can write to this buffer
 // without memory allocation.
-func (b *buffer) WritableBytes() int {
+func (b *Buffer) WritableBytes() int {
 	return len(b.buf) - b.writerIndex
 }
 
-func (b *buffer) prependableBytes() int {
+func (b *Buffer) prependableBytes() int {
 	return b.readerIndex
 }
 
 // WritableByteSlice returns a byte slice you can write bytes of
 // at most its length to it.
-func (b *buffer) WritableByteSlice() []byte {
+func (b *Buffer) WritableByteSlice() []byte {
 	return b.buf[b.writerIndex:len(b.buf)]
 }
 
 // Append adds data to this buffer.
-func (b *buffer) Append(data []byte) {
+func (b *Buffer) Append(data []byte) {
 	b.appendWithLen(data, len(data))
 }
 
 // appendWithLen adds length byte in data to this buffer.
-func (b *buffer) appendWithLen(data []byte, length int) {
+func (b *Buffer) appendWithLen(data []byte, length int) {
 	b.ensureWritableBytes(length)
 	copy(b.buf[b.writerIndex:b.writerIndex+length], data)
 	b.hasWritten(length)
 }
 
-func (b *buffer) ensureWritableBytes(length int) {
+func (b *Buffer) ensureWritableBytes(length int) {
 	if b.WritableBytes() < length {
 		b.makeSpace(length)
 	}
 }
 
-func (b *buffer) hasWritten(length int) {
+func (b *Buffer) hasWritten(length int) {
 	b.writerIndex += length
 }
 
-func (b *buffer) appendInt64(x int64) {
+func (b *Buffer) appendInt64(x int64) {
 	b.appendIntn(8, x)
 }
 
-func (b *buffer) appendInt32(x int32) {
+func (b *Buffer) appendInt32(x int32) {
 	b.appendIntn(4, x)
 }
 
-func (b *buffer) appendInt16(x int16) {
+func (b *Buffer) appendInt16(x int16) {
 	b.appendIntn(2, x)
 }
 
-func (b *buffer) appendInt8(x int8) {
+func (b *Buffer) appendInt8(x int8) {
 	b.appendIntn(1, x)
 }
 
-func (b *buffer) appendIntn(s int, x interface{}) {
+func (b *Buffer) appendIntn(s int, x interface{}) {
 	buf := &bytes.Buffer{}
 	binary.Write(buf, binary.BigEndian, x)
 	b.Append(buf.Bytes())
 }
 
-func (b *buffer) prependInt64(x int64) {
+func (b *Buffer) prependInt64(x int64) {
 	b.prependIntn(8, x)
 }
 
-func (b *buffer) prependInt32(x int32) {
+func (b *Buffer) prependInt32(x int32) {
 	b.prependIntn(4, x)
 }
 
-func (b *buffer) prependInt16(x int16) {
+func (b *Buffer) prependInt16(x int16) {
 	b.prependIntn(2, x)
 }
 
-func (b *buffer) prependInt8(x int8) {
+func (b *Buffer) prependInt8(x int8) {
 	b.prependIntn(1, x)
 }
 
-func (b *buffer) prependIntn(s int, x interface{}) {
+func (b *Buffer) prependIntn(s int, x interface{}) {
 	buf := &bytes.Buffer{}
 	binary.Write(buf, binary.BigEndian, x)
 	b.prepend(buf.Bytes())
 }
 
-func (b *buffer) prepend(data []byte) {
+func (b *Buffer) prepend(data []byte) {
 	length := len(data)
 	b.readerIndex -= length
 	copy(b.buf[b.readerIndex:b.readerIndex+length], data)
 }
 
 // Retrieve removes length readable bytes.
-func (b *buffer) Retrieve(length int) {
+func (b *Buffer) Retrieve(length int) {
 	if length < b.ReadableBytes() {
 		b.readerIndex += length
 	} else {
@@ -135,112 +135,112 @@ func (b *buffer) Retrieve(length int) {
 	}
 }
 
-func (b *buffer) retrieveAll() {
+func (b *Buffer) retrieveAll() {
 	b.readerIndex = cheapPrepend
 	b.writerIndex = cheapPrepend
 }
 
-func (b *buffer) retrieveInt64() {
+func (b *Buffer) retrieveInt64() {
 	b.Retrieve(8)
 }
 
-func (b *buffer) retrieveInt32() {
+func (b *Buffer) retrieveInt32() {
 	b.Retrieve(4)
 }
 
-func (b *buffer) retrieveInt16() {
+func (b *Buffer) retrieveInt16() {
 	b.Retrieve(2)
 }
 
-func (b *buffer) retrieveInt8() {
+func (b *Buffer) retrieveInt8() {
 	b.Retrieve(1)
 }
 
-func (b *buffer) retrieveAllAsByteSlice() []byte {
+func (b *Buffer) retrieveAllAsByteSlice() []byte {
 	return b.retrieveAsByteSlice(b.ReadableBytes())
 }
 
-func (b *buffer) retrieveAsByteSlice(length int) []byte {
+func (b *Buffer) retrieveAsByteSlice(length int) []byte {
 	result := make([]byte, 0, length)
 	result = append(result, b.buf[b.readerIndex:b.readerIndex+length]...)
 	b.Retrieve(length)
 	return result
 }
 
-func (b *buffer) retrieveAllAsString() string {
+func (b *Buffer) retrieveAllAsString() string {
 	return b.retrieveAsString(b.ReadableBytes())
 }
 
-func (b *buffer) retrieveAsString(length int) string {
+func (b *Buffer) retrieveAsString(length int) string {
 	result := string(b.buf[b.readerIndex : b.readerIndex+length])
 	b.Retrieve(length)
 	return result
 }
 
 // PeekAllAsByteSlice returns a internal byte slice with all readable bytes directly.
-func (b *buffer) PeekAllAsByteSlice() []byte {
+func (b *Buffer) PeekAllAsByteSlice() []byte {
 	return b.peekAsByteSlice(b.ReadableBytes())
 }
 
-func (b *buffer) peekAsByteSlice(length int) []byte {
+func (b *Buffer) peekAsByteSlice(length int) []byte {
 	return b.buf[b.readerIndex : b.readerIndex+length]
 }
 
-func (b *buffer) peekInt64() int64 {
+func (b *Buffer) peekInt64() int64 {
 	var x int64
 	b.peekIntn(8, &x)
 	return x
 }
 
-func (b *buffer) peekInt32() int32 {
+func (b *Buffer) peekInt32() int32 {
 	var x int32
 	b.peekIntn(4, &x)
 	return x
 }
 
-func (b *buffer) peekInt16() int16 {
+func (b *Buffer) peekInt16() int16 {
 	var x int16
 	b.peekIntn(2, &x)
 	return x
 }
 
-func (b *buffer) peekInt8() int8 {
+func (b *Buffer) peekInt8() int8 {
 	var x int8
 	b.peekIntn(1, &x)
 	return x
 }
 
-func (b *buffer) peekIntn(s int, x interface{}) {
+func (b *Buffer) peekIntn(s int, x interface{}) {
 	buf := &bytes.Buffer{}
 	buf.Write(b.buf[b.readerIndex : b.readerIndex+s])
 	binary.Read(buf, binary.BigEndian, x)
 }
 
-func (b *buffer) readInt64() int64 {
+func (b *Buffer) readInt64() int64 {
 	x := b.peekInt64()
 	b.retrieveInt64()
 	return x
 }
 
-func (b *buffer) readInt32() int32 {
+func (b *Buffer) readInt32() int32 {
 	x := b.peekInt32()
 	b.retrieveInt32()
 	return x
 }
 
-func (b *buffer) readInt16() int16 {
+func (b *Buffer) readInt16() int16 {
 	x := b.peekInt16()
 	b.retrieveInt16()
 	return x
 }
 
-func (b *buffer) readInt8() int8 {
+func (b *Buffer) readInt8() int8 {
 	x := b.peekInt8()
 	b.retrieveInt8()
 	return x
 }
 
-func (b *buffer) makeSpace(length int) {
+func (b *Buffer) makeSpace(length int) {
 	writable := b.WritableBytes()
 	if writable+b.prependableBytes() < length+cheapPrepend {
 		more := length - writable
