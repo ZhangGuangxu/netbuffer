@@ -12,6 +12,7 @@ const (
 
 var crlf = []byte("\r\n")
 
+// Buffer wraps a buffer for net data.
 type Buffer struct {
 	buf         []byte
 	readerIndex int
@@ -25,9 +26,9 @@ func NewBuffer() *Buffer {
 }
 
 // NewBufferWithSize returns a buffer with length you specified.
-func NewBufferWithSize(initialSize int) *Buffer {
+func NewBufferWithSize(s int) *Buffer {
 	return &Buffer{
-		buf:         make([]byte, cheapPrepend+initialSize),
+		buf:         make([]byte, cheapPrepend+s),
 		readerIndex: cheapPrepend,
 		writerIndex: cheapPrepend,
 	}
@@ -76,19 +77,23 @@ func (b *Buffer) hasWritten(length int) {
 	b.writerIndex += length
 }
 
-func (b *Buffer) appendInt64(x int64) {
+// AppendInt64 appends a int64 to this buffer.
+func (b *Buffer) AppendInt64(x int64) {
 	b.appendIntn(8, x)
 }
 
-func (b *Buffer) appendInt32(x int32) {
+// AppendInt32 appends a int32 to this buffer.
+func (b *Buffer) AppendInt32(x int32) {
 	b.appendIntn(4, x)
 }
 
-func (b *Buffer) appendInt16(x int16) {
+// AppendInt16 appends a int16 to this buffer.
+func (b *Buffer) AppendInt16(x int16) {
 	b.appendIntn(2, x)
 }
 
-func (b *Buffer) appendInt8(x int8) {
+// AppendInt8 appends a int8 to this buffer.
+func (b *Buffer) AppendInt8(x int8) {
 	b.appendIntn(1, x)
 }
 
@@ -98,19 +103,23 @@ func (b *Buffer) appendIntn(s int, x interface{}) {
 	b.Append(buf.Bytes())
 }
 
-func (b *Buffer) prependInt64(x int64) {
+// PrependInt64 prepend a int64 to this buffer.
+func (b *Buffer) PrependInt64(x int64) {
 	b.prependIntn(8, x)
 }
 
-func (b *Buffer) prependInt32(x int32) {
+// PrependInt32 prepend a int32 to this buffer.
+func (b *Buffer) PrependInt32(x int32) {
 	b.prependIntn(4, x)
 }
 
-func (b *Buffer) prependInt16(x int16) {
+// PrependInt16 prepend a int16 to this buffer.
+func (b *Buffer) PrependInt16(x int16) {
 	b.prependIntn(2, x)
 }
 
-func (b *Buffer) prependInt8(x int8) {
+// PrependInt8 prepend a int8 to this buffer.
+func (b *Buffer) PrependInt8(x int8) {
 	b.prependIntn(1, x)
 }
 
@@ -140,19 +149,27 @@ func (b *Buffer) retrieveAll() {
 	b.writerIndex = cheapPrepend
 }
 
-func (b *Buffer) retrieveInt64() {
+// RetrieveInt64 removes a int64(8 bytes) from the beginning of 
+// the readable bytes of this buffer.
+func (b *Buffer) RetrieveInt64() {
 	b.Retrieve(8)
 }
 
-func (b *Buffer) retrieveInt32() {
+// RetrieveInt32 removes a int32(4 bytes) from the beginning of
+// the readable bytes of this buffer.
+func (b *Buffer) RetrieveInt32() {
 	b.Retrieve(4)
 }
 
-func (b *Buffer) retrieveInt16() {
+// RetrieveInt16 removes a int16(2 bytes) from the beginning of
+// the readable bytes of this buffer.
+func (b *Buffer) RetrieveInt16() {
 	b.Retrieve(2)
 }
 
-func (b *Buffer) retrieveInt8() {
+// RetrieveInt8 removes a int8(1 byte) from the beginning of
+// the readable bytes of this buffer.
+func (b *Buffer) RetrieveInt8() {
 	b.Retrieve(1)
 }
 
@@ -177,34 +194,45 @@ func (b *Buffer) retrieveAsString(length int) string {
 	return result
 }
 
-// PeekAllAsByteSlice returns a internal byte slice with all readable bytes directly.
+// PeekAllAsByteSlice returns a byte slice with all readable bytes of this buffer.
+// You MUST NOT modify the content of the returned slice.
 func (b *Buffer) PeekAllAsByteSlice() []byte {
-	return b.peekAsByteSlice(b.ReadableBytes())
+	return b.PeekAsByteSlice(b.ReadableBytes())
 }
 
-func (b *Buffer) peekAsByteSlice(length int) []byte {
+// PeekAsByteSlice returns a byte slice which contains length count bytes.
+// You MUST NOT modify the content of the returned slice.
+func (b *Buffer) PeekAsByteSlice(length int) []byte {
 	return b.buf[b.readerIndex : b.readerIndex+length]
 }
 
-func (b *Buffer) peekInt64() int64 {
+// PeekInt64 parses a int64 from the beginning of the readable bytes of this buffer.
+// This function does not modify this buffer.
+func (b *Buffer) PeekInt64() int64 {
 	var x int64
 	b.peekIntn(8, &x)
 	return x
 }
 
-func (b *Buffer) peekInt32() int32 {
+// PeekInt32 parses a int32 from the beginning of the readable bytes of this buffer.
+// This function does not modify this buffer.
+func (b *Buffer) PeekInt32() int32 {
 	var x int32
 	b.peekIntn(4, &x)
 	return x
 }
 
-func (b *Buffer) peekInt16() int16 {
+// PeekInt16 parses a int16 from the beginning of the readable bytes of this buffer.
+// This function does not modify this buffer.
+func (b *Buffer) PeekInt16() int16 {
 	var x int16
 	b.peekIntn(2, &x)
 	return x
 }
 
-func (b *Buffer) peekInt8() int8 {
+// PeekInt8 parses a int8 from the beginning of the readable bytes of this buffer.
+// This function does not modify this buffer.
+func (b *Buffer) PeekInt8() int8 {
 	var x int8
 	b.peekIntn(1, &x)
 	return x
@@ -216,39 +244,47 @@ func (b *Buffer) peekIntn(s int, x interface{}) {
 	binary.Read(buf, binary.BigEndian, x)
 }
 
-func (b *Buffer) readInt64() int64 {
-	x := b.peekInt64()
-	b.retrieveInt64()
+// ReadInt64 parses a int64 from the beginning of the readable bytes of this buffer and 
+// changes readable bytes of this buffer.
+func (b *Buffer) ReadInt64() int64 {
+	x := b.PeekInt64()
+	b.RetrieveInt64()
 	return x
 }
 
-func (b *Buffer) readInt32() int32 {
-	x := b.peekInt32()
-	b.retrieveInt32()
+// ReadInt32 parses a int32 from the beginning of the readable bytes of this buffer and 
+// changes readable bytes of this buffer.
+func (b *Buffer) ReadInt32() int32 {
+	x := b.PeekInt32()
+	b.RetrieveInt32()
 	return x
 }
 
-func (b *Buffer) readInt16() int16 {
-	x := b.peekInt16()
-	b.retrieveInt16()
+// ReadInt16 parses a int16 from the beginning of the readable bytes of this buffer and 
+// changes readable bytes of this buffer.
+func (b *Buffer) ReadInt16() int16 {
+	x := b.PeekInt16()
+	b.RetrieveInt16()
 	return x
 }
 
-func (b *Buffer) readInt8() int8 {
-	x := b.peekInt8()
-	b.retrieveInt8()
+// ReadInt8 parses a int8 from the beginning of the readable bytes of this buffer and 
+// changes readable bytes of this buffer.
+func (b *Buffer) ReadInt8() int8 {
+	x := b.PeekInt8()
+	b.RetrieveInt8()
 	return x
 }
 
 func (b *Buffer) makeSpace(length int) {
 	writable := b.WritableBytes()
-	if writable+b.prependableBytes() < length+cheapPrepend {
-		more := length - writable
-		b.buf = append(b.buf, make([]byte, more)...)
-	} else {
+	if writable+b.prependableBytes() >= length+cheapPrepend {
 		readable := b.ReadableBytes()
 		copy(b.buf[cheapPrepend:cheapPrepend+readable], b.buf[b.readerIndex:b.writerIndex])
 		b.readerIndex = cheapPrepend
 		b.writerIndex = b.readerIndex + readable
+	} else {
+		more := length - writable
+		b.buf = append(b.buf, make([]byte, more)...)
 	}
 }
