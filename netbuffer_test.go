@@ -1,8 +1,8 @@
 package netbuffer
 
 import (
-	"testing"
 	"bytes"
+	"testing"
 )
 
 func TestNewBuffer(t *testing.T) {
@@ -18,6 +18,12 @@ func TestNewBufferWithSize(t *testing.T) {
 	if cap(buf.buf) != cheapPrepend+size {
 		t.Errorf("cap(buf.buf) != %d", cheapPrepend+size)
 	}
+
+	buf.AppendInt64(int64(9223372036854770000))
+	b := buf.WritableByteSlice()
+	if len(b) != 2 {
+		t.Errorf("len(buf.WritableByteSlice()) = %d, want 2", len(b))
+	}
 }
 
 func TestAppend(t *testing.T) {
@@ -30,7 +36,7 @@ func TestAppend(t *testing.T) {
 		t.Errorf("buf.ReadableBytes() = %d, want %d", buf.ReadableBytes(), len(data))
 	}
 
-	writable := cap(buf.buf)-(cheapPrepend + len(data))
+	writable := cap(buf.buf) - (cheapPrepend + len(data))
 	if buf.WritableBytes() != writable {
 		t.Errorf("buf.WritableBytes() = %d, want %d", buf.WritableBytes(), writable)
 	}
@@ -38,30 +44,30 @@ func TestAppend(t *testing.T) {
 	if buf.readerIndex != cheapPrepend {
 		t.Errorf("buf.readerIndex = %d, not %d", buf.readerIndex, cheapPrepend)
 	}
-	if buf.writerIndex != cheapPrepend + len(data) {
-		t.Errorf("buf.writerIndex = %d, not %d", buf.writerIndex, cheapPrepend + len(data))
+	if buf.writerIndex != cheapPrepend+len(data) {
+		t.Errorf("buf.writerIndex = %d, not %d", buf.writerIndex, cheapPrepend+len(data))
 	}
 
 	data = bytes.Repeat([]byte("a"), 2048)
 	buf.Append(data)
-	newCap := cheapPrepend+len([]byte("abcde"))+2048
+	newCap := cheapPrepend + len([]byte("abcde")) + 2048
 	if len(buf.buf) != newCap {
 		t.Errorf("len(buf.buf) = %d, want %d", len(buf.buf), newCap)
 	}
 
 	buf.Append(data)
 	buf.Append(data)
-	newCap = cheapPrepend+len([]byte("abcde"))+2048*3
+	newCap = cheapPrepend + len([]byte("abcde")) + 2048*3
 	if len(buf.buf) != newCap {
 		t.Errorf("len(buf.buf) = %d, want %d", len(buf.buf), newCap)
 	}
 
-	buf.Retrieve(2048+1024)
+	buf.Retrieve(2048 + 1024)
 	buf.Append(data)
 	if buf.readerIndex != cheapPrepend {
 		t.Error("buf.Retrieve, then buf.Append, then buf.readerIndex is wrong")
 	}
-	if buf.writerIndex != buf.readerIndex + buf.ReadableBytes() {
+	if buf.writerIndex != buf.readerIndex+buf.ReadableBytes() {
 		t.Error("buf.Retrieve, then buf.Append, then buf.writerIndex is wrong")
 	}
 
@@ -170,6 +176,15 @@ func TestPeek(t *testing.T) {
 		buf.AppendInt64(int64(9223372036854770000))
 		if buf.PeekInt64() != int64(9223372036854770000) {
 			t.Errorf("After buf.AppendInt64(int64(9223372036854770000)), buf.PeekInt64() = %v, want %d", buf.PeekInt64(), 9223372036854770000)
+		}
+	}
+
+	{
+		buf := NewBuffer()
+		buf.AppendInt64(int64(9223372036854770000))
+		b := buf.PeekAllAsByteSlice()
+		if len(b) != 8 {
+			t.Errorf("buf.PeekAllAsByteSlice() returns a byte slice with %d bytes, want 8 bytes", len(b))
 		}
 	}
 }

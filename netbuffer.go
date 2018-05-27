@@ -140,16 +140,16 @@ func (b *Buffer) Retrieve(length int) {
 	if length < b.ReadableBytes() {
 		b.readerIndex += length
 	} else {
-		b.retrieveAll()
+		b.RetrieveAll()
 	}
 }
 
-func (b *Buffer) retrieveAll() {
+func (b *Buffer) RetrieveAll() {
 	b.readerIndex = cheapPrepend
 	b.writerIndex = cheapPrepend
 }
 
-// RetrieveInt64 removes a int64(8 bytes) from the beginning of 
+// RetrieveInt64 removes a int64(8 bytes) from the beginning of
 // the readable bytes of this buffer.
 func (b *Buffer) RetrieveInt64() {
 	b.Retrieve(8)
@@ -244,7 +244,7 @@ func (b *Buffer) peekIntn(s int, x interface{}) {
 	binary.Read(buf, binary.BigEndian, x)
 }
 
-// ReadInt64 parses a int64 from the beginning of the readable bytes of this buffer and 
+// ReadInt64 parses a int64 from the beginning of the readable bytes of this buffer and
 // changes readable bytes of this buffer.
 func (b *Buffer) ReadInt64() int64 {
 	x := b.PeekInt64()
@@ -252,7 +252,7 @@ func (b *Buffer) ReadInt64() int64 {
 	return x
 }
 
-// ReadInt32 parses a int32 from the beginning of the readable bytes of this buffer and 
+// ReadInt32 parses a int32 from the beginning of the readable bytes of this buffer and
 // changes readable bytes of this buffer.
 func (b *Buffer) ReadInt32() int32 {
 	x := b.PeekInt32()
@@ -260,7 +260,7 @@ func (b *Buffer) ReadInt32() int32 {
 	return x
 }
 
-// ReadInt16 parses a int16 from the beginning of the readable bytes of this buffer and 
+// ReadInt16 parses a int16 from the beginning of the readable bytes of this buffer and
 // changes readable bytes of this buffer.
 func (b *Buffer) ReadInt16() int16 {
 	x := b.PeekInt16()
@@ -268,7 +268,7 @@ func (b *Buffer) ReadInt16() int16 {
 	return x
 }
 
-// ReadInt8 parses a int8 from the beginning of the readable bytes of this buffer and 
+// ReadInt8 parses a int8 from the beginning of the readable bytes of this buffer and
 // changes readable bytes of this buffer.
 func (b *Buffer) ReadInt8() int8 {
 	x := b.PeekInt8()
