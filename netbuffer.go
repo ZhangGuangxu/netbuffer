@@ -62,7 +62,7 @@ func (b *Buffer) Append(data []byte) {
 func (b *Buffer) appendWithLen(data []byte, length int) {
 	b.ensureWritableBytes(length)
 	copy(b.buf[b.writerIndex:b.writerIndex+length], data)
-	b.hasWritten(length)
+	b.HasWritten(length)
 }
 
 func (b *Buffer) ensureWritableBytes(length int) {
@@ -71,7 +71,8 @@ func (b *Buffer) ensureWritableBytes(length int) {
 	}
 }
 
-func (b *Buffer) hasWritten(length int) {
+// HasWritten add length of the content of buffer when necessary
+func (b *Buffer) HasWritten(length int) {
 	b.writerIndex += length
 }
 
