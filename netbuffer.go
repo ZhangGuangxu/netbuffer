@@ -10,8 +10,6 @@ const (
 	initialSize  = 1024 // default count of byte of buffer
 )
 
-var crlf = []byte("\r\n")
-
 // Buffer wraps a buffer for net data.
 type Buffer struct {
 	buf         []byte
