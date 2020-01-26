@@ -77,55 +77,61 @@ func (b *Buffer) HasWritten(length int) {
 }
 
 // AppendInt64 appends a int64 to this buffer.
-func (b *Buffer) AppendInt64(x int64) {
-	b.appendIntn(8, x)
+func (b *Buffer) AppendInt64(x int64) error {
+	return b.appendIntn(8, x)
 }
 
 // AppendInt32 appends a int32 to this buffer.
-func (b *Buffer) AppendInt32(x int32) {
-	b.appendIntn(4, x)
+func (b *Buffer) AppendInt32(x int32) error {
+	return b.appendIntn(4, x)
 }
 
 // AppendInt16 appends a int16 to this buffer.
-func (b *Buffer) AppendInt16(x int16) {
-	b.appendIntn(2, x)
+func (b *Buffer) AppendInt16(x int16) error {
+	return b.appendIntn(2, x)
 }
 
 // AppendInt8 appends a int8 to this buffer.
-func (b *Buffer) AppendInt8(x int8) {
-	b.appendIntn(1, x)
+func (b *Buffer) AppendInt8(x int8) error {
+	return b.appendIntn(1, x)
 }
 
-func (b *Buffer) appendIntn(s int, x interface{}) {
+func (b *Buffer) appendIntn(s int, x interface{}) error {
 	buf := &bytes.Buffer{}
-	binary.Write(buf, binary.BigEndian, x)
+	if err := binary.Write(buf, binary.BigEndian, x); err != nil {
+		return err
+	}
 	b.Append(buf.Bytes())
+	return nil
 }
 
 // PrependInt64 prepend a int64 to this buffer.
-func (b *Buffer) PrependInt64(x int64) {
-	b.prependIntn(8, x)
+func (b *Buffer) PrependInt64(x int64) error {
+	return b.prependIntn(8, x)
 }
 
 // PrependInt32 prepend a int32 to this buffer.
-func (b *Buffer) PrependInt32(x int32) {
-	b.prependIntn(4, x)
+func (b *Buffer) PrependInt32(x int32) error {
+	return b.prependIntn(4, x)
 }
 
 // PrependInt16 prepend a int16 to this buffer.
-func (b *Buffer) PrependInt16(x int16) {
-	b.prependIntn(2, x)
+func (b *Buffer) PrependInt16(x int16) error {
+	return b.prependIntn(2, x)
 }
 
 // PrependInt8 prepend a int8 to this buffer.
-func (b *Buffer) PrependInt8(x int8) {
-	b.prependIntn(1, x)
+func (b *Buffer) PrependInt8(x int8) error {
+	return b.prependIntn(1, x)
 }
 
-func (b *Buffer) prependIntn(s int, x interface{}) {
+func (b *Buffer) prependIntn(s int, x interface{}) error {
 	buf := &bytes.Buffer{}
-	binary.Write(buf, binary.BigEndian, x)
+	if err := binary.Write(buf, binary.BigEndian, x); err != nil {
+		return err
+	}
 	b.prepend(buf.Bytes())
+	return nil
 }
 
 func (b *Buffer) prepend(data []byte) {
@@ -207,72 +213,86 @@ func (b *Buffer) PeekAsByteSlice(length int) []byte {
 
 // PeekInt64 parses a int64 from the beginning of the readable bytes of this buffer.
 // This function does not modify this buffer.
-func (b *Buffer) PeekInt64() int64 {
+func (b *Buffer) PeekInt64() (int64, error) {
 	var x int64
-	b.peekIntn(8, &x)
-	return x
+	err := b.peekIntn(8, &x)
+	return x, err
 }
 
 // PeekInt32 parses a int32 from the beginning of the readable bytes of this buffer.
 // This function does not modify this buffer.
-func (b *Buffer) PeekInt32() int32 {
+func (b *Buffer) PeekInt32() (int32, error) {
 	var x int32
-	b.peekIntn(4, &x)
-	return x
+	err := b.peekIntn(4, &x)
+	return x, err
 }
 
 // PeekInt16 parses a int16 from the beginning of the readable bytes of this buffer.
 // This function does not modify this buffer.
-func (b *Buffer) PeekInt16() int16 {
+func (b *Buffer) PeekInt16() (int16, error) {
 	var x int16
-	b.peekIntn(2, &x)
-	return x
+	err := b.peekIntn(2, &x)
+	return x, err
 }
 
 // PeekInt8 parses a int8 from the beginning of the readable bytes of this buffer.
 // This function does not modify this buffer.
-func (b *Buffer) PeekInt8() int8 {
+func (b *Buffer) PeekInt8() (int8, error) {
 	var x int8
-	b.peekIntn(1, &x)
-	return x
+	err := b.peekIntn(1, &x)
+	return x, err
 }
 
-func (b *Buffer) peekIntn(s int, x interface{}) {
+func (b *Buffer) peekIntn(s int, x interface{}) error {
 	buf := &bytes.Buffer{}
-	buf.Write(b.buf[b.readerIndex : b.readerIndex+s])
-	binary.Read(buf, binary.BigEndian, x)
+	if _, err := buf.Write(b.buf[b.readerIndex : b.readerIndex+s]); err != nil {
+		return err
+	}
+	return binary.Read(buf, binary.BigEndian, x)
 }
 
 // ReadInt64 parses a int64 from the beginning of the readable bytes of this buffer and
 // changes readable bytes of this buffer.
-func (b *Buffer) ReadInt64() int64 {
-	x := b.PeekInt64()
+func (b *Buffer) ReadInt64() (int64, error) {
+	x, err := b.PeekInt64()
+	if err != nil {
+		return 0, err
+	}
 	b.RetrieveInt64()
-	return x
+	return x, nil
 }
 
 // ReadInt32 parses a int32 from the beginning of the readable bytes of this buffer and
 // changes readable bytes of this buffer.
-func (b *Buffer) ReadInt32() int32 {
-	x := b.PeekInt32()
+func (b *Buffer) ReadInt32() (int32, error) {
+	x, err := b.PeekInt32()
+	if err != nil {
+		return 0, err
+	}
 	b.RetrieveInt32()
-	return x
+	return x, nil
 }
 
 // ReadInt16 parses a int16 from the beginning of the readable bytes of this buffer and
 // changes readable bytes of this buffer.
-func (b *Buffer) ReadInt16() int16 {
-	x := b.PeekInt16()
+func (b *Buffer) ReadInt16() (int16, error) {
+	x, err := b.PeekInt16()
+	if err != nil {
+		return 0, err
+	}
 	b.RetrieveInt16()
-	return x
+	return x, nil
 }
 
 // ReadInt8 parses a int8 from the beginning of the readable bytes of this buffer and
 // changes readable bytes of this buffer.
-func (b *Buffer) ReadInt8() int8 {
-	x := b.PeekInt8()
+func (b *Buffer) ReadInt8() (int8, error) {
+	x, err := b.PeekInt8()
+	if err != nil {
+		return 0, err
+	}
 	b.RetrieveInt8()
-	return x
+	return x, nil
 }
 
 func (b *Buffer) makeSpace(length int) {
